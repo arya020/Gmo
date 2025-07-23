@@ -12,6 +12,7 @@ function Table () {
     type row = { id: number, title: string,  place_of_origin: number, artist_display: string, inscription: string, date_start: number, date_end: number };
     const [rowsData, setRowsData] = useState([]);
     const [selectedRows, setSelectedRows] = useState<row[]>([]);
+    const [selectedCurrRows, setSelectedCurrRows] = useState<Map<number, row[]>>(new Map());
     const opRef = useRef<OverlayPanel>(null);
     let numOfSelect = 0;
 
@@ -42,7 +43,23 @@ function Table () {
         <i className="pi pi-spin pi-spinner" style={{ fontSize: '2rem', marginTop: '25%', marginLeft:'50%' }}></i>
         :
         <> 
-        <DataTable className='tab' value={rowsData} rows={rowsData.length} selectionMode='checkbox' selection={selectedRows} onSelectionChange={(e) =>{ setSelectedRows(e.value); console.log(e.value);}} dataKey="id" stripedRows>
+        <DataTable className='tab' value={rowsData} rows={rowsData.length} selectionMode='checkbox' selection={selectedCurrRows.get(page) || []} onSelectionChange={(e) => {
+                
+                
+                const currSelectedRows = e.value;
+                const prevSelectedRows = selectedRows.filter(row => rowsData.some(data => data.id === row.id));
+                const deSelectedRows = prevSelectedRows.filter(row => !currSelectedRows.some(selected => selected.id === row.id));
+                const newGlobalSelectedRows = selectedRows.filter(row => !deSelectedRows.some(selected => selected.id === row.id));
+                const newSelectedRows = currSelectedRows.filter(row => !newGlobalSelectedRows.some(selected => selected.id === row.id));
+                setSelectedCurrRows(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(page, currSelectedRows);
+                    return newMap;
+                });
+                setSelectedRows([...newGlobalSelectedRows, ...newSelectedRows]);
+
+                console.log('Selected Rows:', selectedRows);
+            }} dataKey="id" stripedRows>
             <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
             <Column field="id" header={
             <>
@@ -58,12 +75,18 @@ function Table () {
                 }} />
                 <button className="Submit" onClick={() => 
                     {
-                        rowsData.forEach((row,Index) => {
-                            if(Index < numOfSelect){
-                                setSelectedRows(prev => [...prev, row]);
-                            }
+                        const getSelections = rowsData.slice(0, numOfSelect);
+                        setSelectedCurrRows(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(page, getSelections);
+                            return newMap;
                         });
+                        const newSelectedRows = getSelections.filter(row => !selectedRows.some(selected => selected.id === row.id));
+                        setSelectedRows(prev => [...prev, ...newSelectedRows]);
+                        console.log(selectedRows);
+                        opRef.current?.hide();
                     }
+
                 }>Select</button>
                 </OverlayPanel>
             </>
