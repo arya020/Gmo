@@ -20,6 +20,7 @@ function Table () {
         getData();
     }, [page]);
 
+
     const getData = async () : Promise<row[]>  => await fetch('https://api.artic.edu/api/v1/artworks?page='+page)
         .then(response => response.json())
         .then( result => {
@@ -37,6 +38,26 @@ function Table () {
         setPage(event.page+1);
     };
 
+    const handleSubmit = () =>  {
+
+        if (!numOfSelect || numOfSelect <= 0) return;
+
+        const getSelections = rowsData.slice(0, numOfSelect);
+        const deSelections = rowsData.slice(numOfSelect, rowsData.length);
+        setSelectedCurrRows(prev => {
+            const newMap = new Map(prev);
+            newMap.set(page, getSelections);
+            return newMap;
+        });
+        const newSelectedRows = getSelections.filter(row => !selectedRows.some(selected => selected.id === row.id));
+        setSelectedRows(prev => [...prev, ...newSelectedRows]);
+        setSelectedRows(prev => prev.filter(row => !deSelections.some(deSelected => deSelected.id === row.id)));
+
+        console.log(selectedRows);
+        opRef.current?.hide();
+
+    }
+
     return (
         <>
         { rowsData && rowsData.length === 0 ?
@@ -44,8 +65,7 @@ function Table () {
         :
         <> 
         <DataTable className='tab' value={rowsData} rows={rowsData.length} selectionMode='checkbox' selection={selectedCurrRows.get(page) || []} onSelectionChange={(e) => {
-                
-                
+                          
                 const currSelectedRows = e.value;
                 const prevSelectedRows = selectedRows.filter(row => rowsData.some(data => data.id === row.id));
                 const deSelectedRows = prevSelectedRows.filter(row => !currSelectedRows.some(selected => selected.id === row.id));
@@ -61,40 +81,28 @@ function Table () {
                 console.log('Selected Rows:', selectedRows);
             }} dataKey="id" stripedRows>
             <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
-            <Column field="id" header={
+            <Column field="title" header={
             <>
                 <button
                 className="p-button p-button-text"
                 onClick={(e) => opRef.current?.toggle(e)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                ID <i className="pi pi-angle-down" />
+                Title <i className="pi pi-angle-down" />
                 </button>
                 <OverlayPanel ref={opRef}>
                 <input type="number" placeholder="Select rows..." className="p-inputtext p-component" onChange={(e) => {
-                    numOfSelect = parseInt(e.target.value);
-                }} />
-                <button className="Submit" onClick={() => 
-                    {
-                        const getSelections = rowsData.slice(0, numOfSelect);
-                        const deSelections = rowsData.slice(numOfSelect, rowsData.length);
-                        setSelectedCurrRows(prev => {
-                            const newMap = new Map(prev);
-                            newMap.set(page, getSelections);
-                            return newMap;
-                        });
-                        const newSelectedRows = getSelections.filter(row => !selectedRows.some(selected => selected.id === row.id));
-                        setSelectedRows(prev => [...prev, ...newSelectedRows]);
-                        setSelectedRows(prev => prev.filter(row => !deSelections.some(deSelected => deSelected.id === row.id)));
-
-                        console.log(selectedRows);
-                        opRef.current?.hide();
+                    const value = parseInt(e.target.value);
+                    if (value > rowsData.length) {
+                    alert(`You can't select more than ${rowsData.length} rows.`);
+                    return;
                     }
-
-                }>Select</button>
+                    numOfSelect = value;
+                }} />
+                <button className="Submit" onClick={handleSubmit}>Select</button>
                 </OverlayPanel>
             </>
             } /> 
-            <Column field="title" header="Title" />
+
             <Column field="place_of_origin" header="Place of Origin" />  
             <Column field="artist_display" header="Artist Display" />
             <Column field="inscription" header="Inscription" />
