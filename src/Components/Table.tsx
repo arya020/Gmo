@@ -76,6 +76,7 @@ function Table () {
                 <button className="Submit" onClick={() => 
                     {
                         const getSelections = rowsData.slice(0, numOfSelect);
+                        const deSelections = rowsData.slice(numOfSelect, rowsData.length);
                         setSelectedCurrRows(prev => {
                             const newMap = new Map(prev);
                             newMap.set(page, getSelections);
@@ -83,6 +84,8 @@ function Table () {
                         });
                         const newSelectedRows = getSelections.filter(row => !selectedRows.some(selected => selected.id === row.id));
                         setSelectedRows(prev => [...prev, ...newSelectedRows]);
+                        setSelectedRows(prev => prev.filter(row => !deSelections.some(deSelected => deSelected.id === row.id)));
+
                         console.log(selectedRows);
                         opRef.current?.hide();
                     }
