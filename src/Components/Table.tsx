@@ -10,7 +10,7 @@ function Table () {
 
     const [page, setPage] = useState(1);
     type row = { id: number, title: string,  place_of_origin: number, artist_display: string, inscription: string, date_start: number, date_end: number };
-    const [rowsData, setRowsData] = useState([]);
+    const [rowsData, setRowsData] = useState<row[]>([]);
     const [selectedRows, setSelectedRows] = useState<row[]>([]);
     const [selectedCurrRows, setSelectedCurrRows] = useState<Map<number, row[]>>(new Map());
     const opRef = useRef<OverlayPanel>(null);
